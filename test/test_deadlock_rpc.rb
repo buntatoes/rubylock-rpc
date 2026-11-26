@@ -119,4 +119,11 @@ class TestDeadlockRpc < Minitest::Test
     assert_equal "deadlock_logo", payload.dig("assets", "small_image")
     assert_equal "https://statlocker.gg/profile/12345678/matches", payload.dig("buttons", 0, "url")
   end
+
+  def test_process_watcher_native_snapshot
+    # Verify native process enumeration works without spawning tasklist/console windows.
+    expected_self = Gem.win_platform? ? "ruby.exe" : "ruby"
+    assert_equal true, DeadlockRpc::ProcessWatcher.process_running?(expected_self)
+    assert_equal false, DeadlockRpc::ProcessWatcher.process_running?("definitely_not_a_real_process_99999.exe")
+  end
 end

@@ -14,7 +14,7 @@ require_relative "deadlock_rpc/process_watcher"
 require_relative "deadlock_rpc/launcher"
 
 module DeadlockRpc
-  VERSION = "1.0.0"
+  VERSION = "1.0.1"
   DISCORD_APP_ID = "1566683259763429509"
   SINGLE_INSTANCE_PORT = 47_782
   MIN_TIMER_REFRESH_SECS = 5

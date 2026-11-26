@@ -39,7 +39,11 @@ module Packager
 
   def short_version
     parts = DeadlockRpc::VERSION.split(".")
-    "v#{parts[0]}.#{parts[1]}"
+    if parts[2] && parts[2] != "0"
+      "v#{DeadlockRpc::VERSION}"
+    else
+      "v#{parts[0]}.#{parts[1]}"
+    end
   end
 
   def collect_ruby_files

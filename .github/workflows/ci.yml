@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Ruby (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Check Ruby syntax
+        run: ruby -c bin/deadlock-rpc lib/deadlock_rpc.rb lib/deadlock_rpc/*.rb scripts/package.rb test/test_deadlock_rpc.rb
+
+      - name: Run Minitest suite
+        run: ruby -Ilib:test test/test_deadlock_rpc.rb
+
+      - name: Build Windows EXE installer and Linux packages
+        run: ruby scripts/package.rb

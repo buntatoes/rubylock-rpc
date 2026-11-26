@@ -1,0 +1,6 @@
+# Ensure GitHub Linguist accurately classifies this repository as Ruby
+bin/deadlock-rpc linguist-language=Ruby linguist-detectable=true
+*.rb linguist-language=Ruby linguist-detectable=true
+Rakefile linguist-language=Ruby linguist-detectable=true
+*.gemspec linguist-language=Ruby linguist-detectable=true
+packaging/** linguist-vendored

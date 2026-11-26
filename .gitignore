@@ -1,0 +1,6 @@
+/dist/
+/logs/
+/config.toml
+/*.gem
+/pkg/
+/.bundle/

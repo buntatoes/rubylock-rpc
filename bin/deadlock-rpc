@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+# SPDX-License-Identifier: GPL-3.0-only
+
+require_relative "../lib/deadlock_rpc"
+
+exit(DeadlockRpc::Application.new(ARGV).run || 0)

@@ -1,0 +1,75 @@
+name: Bug report
+description: Something isn't working right
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please check the [existing issues](https://github.com/buntatoes/deadlock-rpc-ruby/issues) first in case someone already reported it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug in a sentence or two.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we make the bug happen?
+      placeholder: |
+        1. Start Deadlock RPC (Ruby Edition)
+        2. Launch Deadlock
+        3. ...
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows (.exe installer)
+        - Windows (Source)
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Optional. Drag and drop images here.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Optional. Include your Ruby version (`ruby -v`) and any other helpful details.
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: |
+        The log file helps diagnose issues:
+        - Windows (`.exe` installer): `%LOCALAPPDATA%\DeadlockRPC-Ruby\logs\deadlock-rpc.log`
+        - Linux: `~/.config/deadlock-rpc/logs/deadlock-rpc.log`
+        - Portable / source checkout: `logs/deadlock-rpc.log`
+
+        The log is cleared on each launch, so copy it before restarting the app.
+      value: |
+        <details>
+        <summary>Log file</summary>
+
+        ```log
+        Paste the log here
+        ```
+
+        </details>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Deadlock RPC (Ruby Edition)
+Comment=Discord Rich Presence for Deadlock (GPL-3.0 Ruby Edition)
+Exec=deadlock-rpc
+Icon=deadlock-rpc
+Terminal=false
+Categories=Game;Utility;
+StartupNotify=false

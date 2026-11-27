@@ -17,7 +17,7 @@
 #include <string.h>
 
 #define APP_DISPLAY_NAME  L"RubyLock RPC"
-#define APP_VERSION       L"1.1.0"
+#define APP_VERSION       L"1.2.0"
 #define APP_PUBLISHER     L"Buntato"
 #define UNINSTALL_REG_KEY L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RubyLockRpc"
 #define PAYLOAD_RES_ID    101

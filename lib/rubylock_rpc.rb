@@ -14,7 +14,7 @@ require_relative "rubylock_rpc/process_watcher"
 require_relative "rubylock_rpc/launcher"
 
 module RubylockRpc
-  VERSION = "1.1.0"
+  VERSION = "1.2.0"
   # Public Discord Application ID (not a personal user ID); can be overridden via config.toml
   DEFAULT_DISCORD_APP_ID = "1566683259763429509"
   SINGLE_INSTANCE_PORT = 47_782

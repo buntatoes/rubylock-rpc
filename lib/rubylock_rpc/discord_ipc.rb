@@ -29,7 +29,7 @@ module RubylockRpc
       large_image = if hero_data && !hero_data.icon_url.to_s.empty?
                       hero_data.icon_url
                     else
-                      img_cfg.fallback_large_image
+                      img_cfg.fallback_large_image.to_s.strip
                     end
 
       large_text = if hero_data && !hero_data.name.to_s.empty?
@@ -38,20 +38,20 @@ module RubylockRpc
                      img_cfg.fallback_large_image_tooltip
                    end
 
-      assets = {
-        "large_image" => large_image,
-        "large_text"  => large_text
-      }
+      assets = {}
+      unless large_image.empty?
+        assets["large_image"] = large_image
+        assets["large_text"]  = large_text
+      end
 
-      if large_image != img_cfg.corner_image
-        assets["small_image"] = img_cfg.corner_image
+      corner = img_cfg.corner_image.to_s.strip
+      if !corner.empty? && large_image != corner
+        assets["small_image"] = corner
         assets["small_text"]  = img_cfg.corner_image_tooltip
       end
 
-      activity = {
-        "details" => details,
-        "assets"  => assets
-      }
+      activity = { "details" => details }
+      activity["assets"] = assets unless assets.empty?
 
       activity["state"] = state if state && !state.empty?
       activity["timestamps"] = { "start" => start_time.to_i } if start_time

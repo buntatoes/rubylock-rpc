@@ -11,10 +11,11 @@ class TestRubylockRpc < Minitest::Test
     assert_equal true, parsed.dig("general", "launch_game_on_start")
     assert_equal 500, parsed.dig("general", "game_log_poll_interval_ms")
     assert_equal "", parsed.dig("general", "discord_app_id")
-    assert_equal 5, parsed.dig("general", "config_version")
+    assert_equal 6, parsed.dig("general", "config_version")
     assert_equal "Playing as {hero}", parsed.dig("presence", "details_with_hero")
     assert_equal "Browsing the Main Menu", parsed.dig("presence", "status", "in_main_menu")
-    assert_equal "deadlock_logo", parsed.dig("images", "fallback_large_image")
+    assert_equal RubylockRpc::DEFAULT_ICON_URL, parsed.dig("images", "fallback_large_image")
+    assert_equal RubylockRpc::DEFAULT_ICON_URL, parsed.dig("images", "corner_image")
     assert_equal "RubyLock RPC", parsed.dig("images", "fallback_large_image_tooltip")
 
     dumped = RubylockRpc::Toml.dump(parsed)
@@ -25,19 +26,26 @@ class TestRubylockRpc < Minitest::Test
   def test_config_migration_and_vars
     Dir.mktmpdir do |dir|
       cfg_file = File.join(dir, "config.toml")
-      File.write(cfg_file, "[general]\nconfig_version = 1\nlaunch_game_on_start = false\n")
+      File.write(
+        cfg_file,
+        "[general]\nconfig_version = 4\nlaunch_game_on_start = false\n" \
+        "[images]\nfallback_large_image = \"deadlock_logo\"\ncorner_image = \"deadlock_logo\"\n"
+      )
       cfg = RubylockRpc::ConfigManager.load(cfg_file)
       assert_equal false, cfg.general.launch_game_on_start
-      assert_equal 5, cfg.general.config_version
+      assert_equal 6, cfg.general.config_version
       assert_equal nil, cfg.general.discord_app_id
+      assert_equal RubylockRpc::DEFAULT_ICON_URL, cfg.images.fallback_large_image
+      assert_equal RubylockRpc::DEFAULT_ICON_URL, cfg.images.corner_image
       assert_equal "Playing as {hero}", cfg.presence.details_with_hero
     end
 
     Dir.mktmpdir do |dir|
       cfg_file = File.join(dir, "config.toml")
-      File.write(cfg_file, "[general]\nconfig_version = 5\ndiscord_app_id = \"123456789012345678\"\n")
+      File.write(cfg_file, "[general]\nconfig_version = 6\ndiscord_app_id = \"123456789012345678\"\n[images]\ncorner_image = \"\"\n")
       cfg = RubylockRpc::ConfigManager.load(cfg_file)
       assert_equal "123456789012345678", cfg.general.discord_app_id
+      assert_equal "", cfg.images.corner_image
     end
 
     rendered = RubylockRpc::ConfigManager.apply_vars("Playing as {hero} in {mode}", hero: "Haze", mode: "Standard Match")
@@ -126,9 +134,21 @@ class TestRubylockRpc < Minitest::Test
     assert_equal "Standard Match - 05:10", payload["state"]
     assert_equal "https://assets.deadlock-api.com/heroes/ratking.png", payload.dig("assets", "large_image")
     assert_equal "Rat King", payload.dig("assets", "large_text")
-    assert_equal "deadlock_logo", payload.dig("assets", "small_image")
+    assert_equal RubylockRpc::DEFAULT_ICON_URL, payload.dig("assets", "small_image")
     assert_equal "RubyLock RPC", payload.dig("assets", "small_text")
     assert_equal "https://statlocker.gg/profile/12345678/matches", payload.dig("buttons", 0, "url")
+
+    hidden_corner_cfg = RubylockRpc::ImagesConfig.new(corner_image: "")
+    hidden_payload = RubylockRpc::DiscordIpcClient.build_activity_payload(
+      details: "Playing as Rat King",
+      hero_data: hero,
+      state: "Standard Match - 05:10",
+      start_time: 1_700_000_000,
+      party_size: nil,
+      img_cfg: hidden_corner_cfg
+    )
+    assert_equal nil, hidden_payload.dig("assets", "small_image")
+    assert_equal nil, hidden_payload.dig("assets", "small_text")
   end
 
   def test_process_watcher_native_snapshot

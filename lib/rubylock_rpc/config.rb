@@ -5,6 +5,8 @@ require_relative "toml"
 require_relative "logger"
 
 module RubylockRpc
+  DEFAULT_ICON_URL = "https://raw.githubusercontent.com/buntatoes/rubylock-rpc/main/assets/icon.png"
+
   module HeroPortraitStyle
     NORMAL   = :normal
     GLOAT    = :gloat
@@ -49,7 +51,7 @@ module RubylockRpc
         discord_app_id: nil,
         game_folder: nil,
         declined_shortcut: false,
-        config_version: 5
+        config_version: 6
       }
       super(defaults.merge(kwargs))
     end
@@ -114,9 +116,9 @@ module RubylockRpc
   ) do
     def initialize(**kwargs)
       defaults = {
-        fallback_large_image: "deadlock_logo",
+        fallback_large_image: DEFAULT_ICON_URL,
         fallback_large_image_tooltip: "RubyLock RPC",
-        corner_image: "deadlock_logo",
+        corner_image: DEFAULT_ICON_URL,
         corner_image_tooltip: "RubyLock RPC"
       }
       super(defaults.merge(kwargs))
@@ -179,7 +181,7 @@ module RubylockRpc
   end
 
   module ConfigManager
-    CURRENT_CONFIG_VERSION = 5
+    CURRENT_CONFIG_VERSION = 6
 
     DEFAULT_TOML = <<~TOML
       [general]
@@ -198,7 +200,7 @@ module RubylockRpc
       # Set to true after the user declines the shortcut install prompt. Managed automatically.
       declined_shortcut = false
       # Managed automatically — do not edit.
-      config_version = 5
+      config_version = 6
 
       [presence]
       show_hero_image = true
@@ -226,11 +228,11 @@ module RubylockRpc
       post_match = "Reviewing Match Results"
       spectating = "Spectating a Match"
 
-      # Asset key names registered in your Discord application's Art Assets.
+      # Direct HTTPS image URLs or Discord Art Asset keys. Leave corner_image empty ("") to hide the corner badge.
       [images]
-      fallback_large_image = "deadlock_logo"
+      fallback_large_image = "https://raw.githubusercontent.com/buntatoes/rubylock-rpc/main/assets/icon.png"
       fallback_large_image_tooltip = "RubyLock RPC"
-      corner_image = "deadlock_logo"
+      corner_image = "https://raw.githubusercontent.com/buntatoes/rubylock-rpc/main/assets/icon.png"
       corner_image_tooltip = "RubyLock RPC"
     TOML
 
@@ -307,9 +309,9 @@ module RubylockRpc
       )
 
       images = ImagesConfig.new(
-        fallback_large_image: str_or(img_h["fallback_large_image"], "deadlock_logo"),
+        fallback_large_image: str_or(img_h["fallback_large_image"], DEFAULT_ICON_URL),
         fallback_large_image_tooltip: str_or(img_h["fallback_large_image_tooltip"], "RubyLock RPC"),
-        corner_image: str_or(img_h["corner_image"], "deadlock_logo"),
+        corner_image: str_or(img_h["corner_image"], DEFAULT_ICON_URL),
         corner_image_tooltip: str_or(img_h["corner_image_tooltip"], "RubyLock RPC")
       )
 
@@ -345,6 +347,14 @@ module RubylockRpc
             parsed[sec][k] = v unless parsed[sec].key?(k)
           end
         end
+      end
+
+      if version < 6 && parsed["images"].is_a?(Hash)
+        imgs = parsed["images"]
+        imgs["fallback_large_image"] = DEFAULT_ICON_URL if imgs["fallback_large_image"] == "deadlock_logo"
+        imgs["corner_image"] = DEFAULT_ICON_URL if imgs["corner_image"] == "deadlock_logo"
+        imgs["fallback_large_image_tooltip"] = "RubyLock RPC" if imgs["fallback_large_image_tooltip"] == "Deadlock RPC"
+        imgs["corner_image_tooltip"] = "RubyLock RPC" if imgs["corner_image_tooltip"] == "Deadlock RPC"
       end
 
       gen["config_version"] = CURRENT_CONFIG_VERSION

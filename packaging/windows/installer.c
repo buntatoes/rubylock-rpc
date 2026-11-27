@@ -17,7 +17,7 @@
 #include <string.h>
 
 #define APP_DISPLAY_NAME  L"RubyLock RPC"
-#define APP_VERSION       L"1.2.0"
+#define APP_VERSION       L"1.3.0"
 #define APP_PUBLISHER     L"Buntato"
 #define UNINSTALL_REG_KEY L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RubyLockRpc"
 #define PAYLOAD_RES_ID    101
@@ -177,15 +177,21 @@ static int extract_payload(const wchar_t *install_dir) {
         _snwprintf(full_path, sizeof(full_path) / sizeof(full_path[0]), L"%ls\\%ls", install_dir, rel_wide);
         ensure_parent_dirs(full_path);
 
-        HANDLE hFile = CreateFileW(
-            full_path,
-            GENERIC_WRITE,
-            0,
-            NULL,
-            CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL
-        );
+        HANDLE hFile = INVALID_HANDLE_VALUE;
+        for (int attempt = 0; attempt < 25; ++attempt) {
+            hFile = CreateFileW(
+                full_path,
+                GENERIC_WRITE,
+                0,
+                NULL,
+                CREATE_ALWAYS,
+                FILE_ATTRIBUTE_NORMAL,
+                NULL
+            );
+            if (hFile != INVALID_HANDLE_VALUE) break;
+            if (GetLastError() != ERROR_SHARING_VIOLATION && GetLastError() != ERROR_ACCESS_DENIED) break;
+            Sleep(200);
+        }
         if (hFile == INVALID_HANDLE_VALUE) return 0;
 
         DWORD written = 0;

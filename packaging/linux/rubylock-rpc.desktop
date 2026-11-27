@@ -8,3 +8,8 @@ Icon=rubylock-rpc
 Terminal=false
 Categories=Game;Utility;
 StartupNotify=false
+Actions=Uninstall;
+
+[Desktop Action Uninstall]
+Name=Uninstall RubyLock RPC
+Exec=rubylock-rpc --uninstall

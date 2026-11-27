@@ -48,7 +48,10 @@ static int is_cli_flag(int argc, char **argv) {
             strcmp(argv[i], "-h") == 0 ||
             strcmp(argv[i], "--version") == 0 ||
             strcmp(argv[i], "-v") == 0 ||
-            strcmp(argv[i], "--generate-config") == 0) {
+            strcmp(argv[i], "--generate-config") == 0 ||
+            strcmp(argv[i], "--check-update") == 0 ||
+            strcmp(argv[i], "--update") == 0 ||
+            strcmp(argv[i], "--uninstall") == 0) {
             return 1;
         }
     }

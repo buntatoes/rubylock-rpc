@@ -157,4 +157,94 @@ class TestRubylockRpc < Minitest::Test
     assert_equal true, RubylockRpc::ProcessWatcher.process_running?(expected_self)
     assert_equal false, RubylockRpc::ProcessWatcher.process_running?("definitely_not_a_real_process_99999.exe")
   end
+
+  def test_updater_version_asset_and_url_checks
+    assert_equal [1, 3, 0], RubylockRpc::Updater.parse_version("v1.3.0")
+    assert_equal [1, 2, 0], RubylockRpc::Updater.parse_version("1.2")
+    assert_equal nil, RubylockRpc::Updater.parse_version("v1.3.0-rc1")
+    assert_equal true, RubylockRpc::Updater.newer_version?("v1.3.0", "1.2.0")
+    assert_equal true, RubylockRpc::Updater.newer_version?("v2.0.0", "1.9.9")
+    assert_equal false, RubylockRpc::Updater.newer_version?("v1.3.0", "1.3.0")
+    assert_equal false, RubylockRpc::Updater.newer_version?("v1.2.9", "1.3.0")
+
+    assets = [
+      { "name" => "RubyLock-RPC-Setup-v1.3.0-win64.exe", "browser_download_url" => "https://github.com/buntatoes/rubylock-rpc/releases/download/v1.3.0/RubyLock-RPC-Setup-v1.3.0-win64.exe" },
+      { "name" => "rubylock-rpc-linux-x86_64.tar.gz", "browser_download_url" => "https://github.com/buntatoes/rubylock-rpc/releases/download/v1.3.0/rubylock-rpc-linux-x86_64.tar.gz" }
+    ]
+    assert_equal "RubyLock-RPC-Setup-v1.3.0-win64.exe", RubylockRpc::Updater.select_asset(assets, win_platform: true)["name"]
+    assert_equal "rubylock-rpc-linux-x86_64.tar.gz", RubylockRpc::Updater.select_asset(assets, win_platform: false)["name"]
+
+    assert_equal true, RubylockRpc::Updater.trusted_download_url?("https://github.com/buntatoes/rubylock-rpc/releases/download/v1.3.0/rubylock-rpc-linux-x86_64.tar.gz")
+    assert_equal true, RubylockRpc::Updater.trusted_download_url?("https://objects.githubusercontent.com/some/asset")
+    assert_equal false, RubylockRpc::Updater.trusted_download_url?("http://github.com/buntatoes/rubylock-rpc")
+    assert_equal false, RubylockRpc::Updater.trusted_download_url?("https://evil.example.com/payload.exe")
+  end
+
+  def test_updater_safe_tar_extraction
+    require "stringio"
+    require "rubygems/package"
+    require "zlib"
+
+    Dir.mktmpdir do |dir|
+      good_tgz = File.join(dir, "good.tar.gz")
+      File.open(good_tgz, "wb") do |f|
+        Zlib::GzipWriter.wrap(f) do |gz|
+          Gem::Package::TarWriter.new(gz) do |tar|
+            tar.add_file_simple("pkg/hello.txt", 0o644, 5) { |io| io.write("hello") }
+          end
+        end
+      end
+      out_dir = File.join(dir, "out")
+      RubylockRpc::Updater.extract_tar_gz(good_tgz, out_dir)
+      assert_equal "hello", File.read(File.join(out_dir, "pkg", "hello.txt"))
+
+      bad_tgz = File.join(dir, "bad.tar.gz")
+      File.open(bad_tgz, "wb") do |f|
+        Zlib::GzipWriter.wrap(f) do |gz|
+          Gem::Package::TarWriter.new(gz) do |tar|
+            tar.add_file_simple("../escape.txt", 0o644, 4) { |io| io.write("nope") }
+          end
+        end
+      end
+      raised = false
+      begin
+        RubylockRpc::Updater.extract_tar_gz(bad_tgz, File.join(dir, "bad_out"))
+      rescue StandardError
+        raised = true
+      end
+      assert_equal true, raised
+    end
+  end
+
+  def test_dbus_wire_message_roundtrip
+    require "stringio"
+    wire = RubylockRpc::Tray::DbusWire
+    msg_bytes = wire.encode_message(
+      type: wire::MSG_METHOD_RETURN,
+      serial: 42,
+      headers: [
+        [wire::HDR_REPLY_SERIAL, wire.v("u", 7)],
+        [wire::HDR_DESTINATION, wire.v("s", ":1.99")]
+      ],
+      body_sig: "u(ia{sv}av)",
+      body_args: [
+        3,
+        [
+          0,
+          { "children-display" => wire.v("s", "submenu") },
+          [
+            wire.v("(ia{sv}av)", [1, { "label" => wire.v("s", "RubyLock RPC"), "enabled" => wire.v("b", true) }, []])
+          ]
+        ]
+      ]
+    )
+    decoded = wire.read_message(StringIO.new(msg_bytes))
+    assert_equal wire::MSG_METHOD_RETURN, decoded[:type]
+    assert_equal 42, decoded[:serial]
+    assert_equal 7, decoded[:reply_serial]
+    assert_equal ":1.99", decoded[:destination]
+    assert_equal 3, decoded[:args][0]
+    assert_equal "submenu", decoded[:args][1][1]["children-display"]
+    assert_equal "RubyLock RPC", decoded[:args][1][2][0][1]["label"]
+  end
 end

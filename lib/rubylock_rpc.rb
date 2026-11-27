@@ -12,9 +12,11 @@ require_relative "rubylock_rpc/discord_ipc"
 require_relative "rubylock_rpc/steam"
 require_relative "rubylock_rpc/process_watcher"
 require_relative "rubylock_rpc/launcher"
+require_relative "rubylock_rpc/updater"
+require_relative "rubylock_rpc/tray"
 
 module RubylockRpc
-  VERSION = "1.2.0"
+  VERSION = "1.3.0"
   # Public Discord Application ID (not a personal user ID); can be overridden via config.toml
   DEFAULT_DISCORD_APP_ID = "1566683259763429509"
   SINGLE_INSTANCE_PORT = 47_782
@@ -50,12 +52,20 @@ module RubylockRpc
         return 0
       end
 
-      RpcLogger.init
-      cfg = ConfigManager.load
-      RpcLogger.info("[config] Loaded from config.toml")
-      shared = SharedBools.new(cfg)
+      if flags.include?("--check-update")
+        return run_check_update
+      end
+
+      if flags.include?("--update")
+        return run_manual_update(silent: flags.include?("--silent"))
+      end
+
+      if flags.include?("--uninstall")
+        return run_uninstall(silent: flags.include?("--silent"))
+      end
 
       instance_lock = self.class.try_acquire_single_instance_lock
+      cfg = ConfigManager.load
       no_launch = flags.include?("--no-launch")
 
       launch_mode = if flags.include?("--launch-with-command")
@@ -84,6 +94,27 @@ module RubylockRpc
         return 0
       end
 
+      RpcLogger.init
+      RpcLogger.info("[config] Loaded from config.toml")
+      shared = SharedBools.new(cfg)
+      @shutdown_requested = false
+
+      @tray = if flags.include?("--no-tray")
+                Tray::NullTray.new
+              else
+                start_tray(shared, instance_lock)
+              end
+
+      unless flags.include?("--no-update-check")
+        Thread.new do
+          Updater.check_and_apply(auto_update: cfg.general.auto_update) do
+            shutdown_and_exit(instance_lock)
+          end
+        rescue StandardError => e
+          RpcLogger.warn("[updater] Background update check failed: #{e.message}")
+        end
+      end
+
       case launch_mode[0]
       when :steam
         Launcher.launch_deadlock
@@ -102,6 +133,7 @@ module RubylockRpc
 
       run_rpc_loop(state, mutex, cfg, shared)
     ensure
+      @tray&.stop rescue nil
       instance_lock&.close rescue nil
     end
 
@@ -122,12 +154,127 @@ module RubylockRpc
 
         Options:
           --no-launch                    Skip launching Deadlock on startup
+          --no-tray                      Run without a system tray icon
+          --no-update-check              Skip background GitHub release update check
+          --check-update                 Check GitHub for a newer release and exit
+          --update                       Download and install the latest GitHub release
+          --uninstall                    Uninstall RubyLock RPC (GUI if desktop active)
+          --silent                       Run --update or --uninstall non-interactively
           --no-shortcut                  Skip shortcut installation prompt
           --launch-with-command -- <cmd> Launch game command with -condebug appended
           --generate-config              Write default config.toml and exit
           -v, --version                  Show version
           -h, --help                     Show this help message
       HELP
+    end
+
+    def start_tray(shared, instance_lock)
+      icon_ico = File.expand_path("../assets/icon.ico", __dir__)
+      Tray.start(
+        shared: shared,
+        version: VERSION,
+        icon_ico_path: icon_ico,
+        callbacks: {
+          launch: -> { Launcher.launch_deadlock },
+          toggle_exit: lambda {
+            new_val = !shared.exit_when_game_closes
+            shared.exit_when_game_closes = new_val
+            ConfigManager.set_config_value("general", "exit_when_game_closes", new_val)
+          },
+          toggle_auto_update: lambda {
+            new_val = !shared.auto_update
+            shared.auto_update = new_val
+            ConfigManager.set_config_value("general", "auto_update", new_val)
+          },
+          check_update: lambda {
+            result = Updater.check_and_apply(auto_update: false) do
+              shutdown_and_exit(instance_lock)
+            end
+            if result == :up_to_date
+              Updater.notify_user("RubyLock RPC", "You are already running the latest version (v#{VERSION}).")
+            end
+          },
+          open_config: lambda {
+            dir = RpcLogger.resolve_data_dir
+            if Gem.win_platform?
+              Process.detach(Process.spawn("explorer.exe", dir.tr("/", "\\")))
+            else
+              Process.detach(Process.spawn("xdg-open", dir))
+            end
+          },
+          quit: -> { shutdown_and_exit(instance_lock) }
+        }
+      )
+    end
+
+    def shutdown_and_exit(instance_lock = nil)
+      @shutdown_requested = true
+      @active_client&.clear_activity rescue nil
+      @active_client&.close rescue nil
+      @tray&.stop rescue nil
+      instance_lock&.close rescue nil
+      exit(0)
+    end
+
+    def run_check_update
+      release = Updater.check_latest
+      if release
+        puts "Update available: #{release.tag_name} (current: v#{VERSION}) - #{release.html_url}"
+      else
+        puts "RubyLock RPC v#{VERSION} is up to date."
+      end
+      0
+    end
+
+    def run_manual_update(silent:)
+      release = Updater.check_latest
+      unless release
+        puts "RubyLock RPC v#{VERSION} is already up to date."
+        return 0
+      end
+
+      puts "Updating RubyLock RPC from v#{VERSION} to #{release.tag_name}..."
+      result = Updater.install_update(release, silent: silent)
+      if result == :launched_installer
+        puts "Installer launched for #{release.tag_name}."
+      else
+        puts "Successfully updated RubyLock RPC to #{release.tag_name}."
+      end
+      0
+    rescue StandardError => e
+      warn "Update failed: #{e.message}"
+      1
+    end
+
+    def run_uninstall(silent:)
+      if Gem.win_platform?
+        setup_exe = File.join(File.expand_path("..", __dir__), "RubyLock-RPC-Setup.exe")
+        unless File.exist?(setup_exe)
+          warn "Uninstaller not found at #{setup_exe}. Use Windows Installed Apps to uninstall."
+          return 1
+        end
+        args = ["--uninstall"]
+        args << "--silent" if silent
+        pid = Process.spawn(setup_exe, *args)
+        Process.detach(pid)
+        return 0
+      end
+
+      app_root = File.expand_path("..", __dir__)
+      uninstaller = [
+        File.join(app_root, "uninstall.sh"),
+        File.join(app_root, "packaging", "linux", "uninstall.sh")
+      ].find { |p| File.exist?(p) }
+
+      unless uninstaller
+        warn "Linux uninstaller script not found."
+        return 1
+      end
+
+      prefix = Updater.detect_linux_install_prefix(app_root)
+      args = ["sh", uninstaller, "--prefix", prefix]
+      args << "--silent" if silent
+      exec({ "PREFIX" => prefix }, *args)
     end
 
     def connect_discord(app_id)
@@ -146,6 +293,7 @@ module RubylockRpc
       app_id = cfg.general.discord_app_id || DEFAULT_DISCORD_APP_ID
       RpcLogger.info("[discord] Connecting...")
       client = connect_discord(app_id)
+      @active_client = client
       current_portrait = cfg.presence.hero_portrait_style
       hero_cache = HeroCache.new(current_portrait)
       last_state = nil
@@ -155,10 +303,13 @@ module RubylockRpc
       update_interval = [cfg.general.discord_update_interval_s.to_i, 1].max
       timer_refresh_secs = [update_interval, MIN_TIMER_REFRESH_SECS].max
 
-      trap("INT")  { client.clear_activity; client.close; exit(0) }
-      trap("TERM") { client.clear_activity; client.close; exit(0) }
+      trap("INT")  { shutdown_and_exit }
+      trap("TERM") { shutdown_and_exit }
+      @tray&.update_status("Waiting for Deadlock")
 
       loop do
+        break if @shutdown_requested
+
         phase, match_mode, hero_key, party_size, map_name, account_id, timer_text, timer_bucket =
           mutex.synchronize do
             elapsed = shared.show_match_timer ? state.match_elapsed : nil
@@ -181,9 +332,14 @@ module RubylockRpc
         elsif game_was_running
           RpcLogger.info("[rubylock-rpc] Game closed.")
           if shared.exit_when_game_closes
+            shutdown_and_exit
+          else
             client.clear_activity
-            client.close
-            exit(0)
+            game_was_running = false
+            last_state = nil
+            @tray&.update_status("Waiting for Deadlock")
+            sleep(update_interval)
+            next
           end
         end
 
@@ -254,6 +410,8 @@ module RubylockRpc
         begin
           client.set_activity(act)
           last_state = current
+          tray_status = state_opt ? "#{details} — #{state_opt}" : details
+          @tray&.update_status(tray_status)
         rescue StandardError => e
           RpcLogger.warn("[rpc] set_activity error: #{e.message}. Reconnecting...")
           begin

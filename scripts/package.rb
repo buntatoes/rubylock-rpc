@@ -160,6 +160,7 @@ module Packager
       ["rubylock-rpc.gemspec", 0o644],
       ["bin/rubylock-rpc", 0o755],
       ["packaging/linux/install.sh", 0o755],
+      ["packaging/linux/uninstall.sh", 0o755],
       ["packaging/linux/rubylock-rpc.desktop", 0o644],
       ["packaging/host/rubylock_rpc_host.c", 0o644],
       ["assets/icon.png", 0o644],
@@ -197,6 +198,11 @@ module Packager
           install_sh = File.binread(File.join(ROOT_DIR, "packaging/linux/install.sh")).gsub("\r\n", "\n")
           tar.add_file_simple("#{prefix}/install.sh", 0o755, install_sh.bytesize) do |io|
             io.write(install_sh)
+          end
+
+          uninstall_sh = File.binread(File.join(ROOT_DIR, "packaging/linux/uninstall.sh")).gsub("\r\n", "\n")
+          tar.add_file_simple("#{prefix}/uninstall.sh", 0o755, uninstall_sh.bytesize) do |io|
+            io.write(uninstall_sh)
           end
 
           if linux_elf && File.exist?(linux_elf)

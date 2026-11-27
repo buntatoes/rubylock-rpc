@@ -6,7 +6,7 @@ require_relative "lib/deadlock_rpc"
 Gem::Specification.new do |spec|
   spec.name          = "deadlock-rpc-ruby"
   spec.version       = DeadlockRpc::VERSION
-  spec.authors       = ["HeyTariq", "Buntato"]
+  spec.authors       = ["Buntato"]
   spec.summary       = "Discord Rich Presence for Deadlock (Ruby Edition)"
   spec.description   = "Zero-dependency Ruby port of deadlock-rpc providing automatic Discord Rich Presence for Deadlock via -condebug console log parsing."
   spec.homepage      = "https://github.com/buntatoes/deadlock-rpc-ruby"

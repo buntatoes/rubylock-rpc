@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Builds the distributable packages for Deadlock RPC (Ruby Edition):
-#   1. Windows Setup Installer: dist/DeadlockRPC-Ruby-Setup-v1.0-win64.exe
-#      (installs deadlock-rpc.exe + Ruby core to %LOCALAPPDATA%\DeadlockRPC-Ruby
-#       and creates a Desktop shortcut to launch Deadlock through Deadlock RPC)
-#   2. Linux release bundle:    dist/deadlock-rpc-linux-x86_64.tar.gz
+# Builds the distributable packages for RubyLock RPC:
+#   1. Windows Setup Installer: dist/RubyLock-RPC-Setup-v<version>-win64.exe
+#      (installs rubylock-rpc.exe + Ruby core to %LOCALAPPDATA%\RubyLock-RPC
+#       and creates a Desktop shortcut to launch Deadlock through RubyLock RPC)
+#   2. Linux release bundle:    dist/rubylock-rpc-linux-x86_64.tar.gz
 
 require "fileutils"
 require "rubygems/package"
 require "tmpdir"
 require "zlib"
-require_relative "../lib/deadlock_rpc"
+require_relative "../lib/rubylock_rpc"
 
 ROOT_DIR = File.expand_path("..", __dir__)
 DIST_DIR = File.join(ROOT_DIR, "dist")
@@ -37,13 +37,8 @@ module Packager
     nil
   end
 
-  def short_version
-    parts = DeadlockRpc::VERSION.split(".")
-    if parts[2] && parts[2] != "0"
-      "v#{DeadlockRpc::VERSION}"
-    else
-      "v#{parts[0]}.#{parts[1]}"
-    end
+  def release_version
+    "v#{RubylockRpc::VERSION}"
   end
 
   def collect_ruby_files
@@ -81,7 +76,7 @@ module Packager
       env = {}
     end
 
-    Dir.mktmpdir("deadlock-rpc-win64") do |stage|
+    Dir.mktmpdir("rubylock-rpc-win64") do |stage|
       prefix_flags = [
         "-ffile-prefix-map=#{ROOT_DIR}=.",
         "-ffile-prefix-map=#{stage}=."
@@ -93,21 +88,21 @@ module Packager
       File.write(host_rc, "1 ICON \"#{icon_src.tr('\\', '/')}\"\n")
       raise "windres failed for host icon" unless system(env, windres, host_rc, "-O", "coff", "-o", host_res)
 
-      # 1. Build deadlock-rpc.exe (native GUI host executable)
-      host_src = File.join(ROOT_DIR, "packaging", "host", "deadlock_rpc_host.c")
-      host_exe = File.join(stage, "deadlock-rpc.exe")
+      # 1. Build rubylock-rpc.exe (native GUI host executable)
+      host_src = File.join(ROOT_DIR, "packaging", "host", "rubylock_rpc_host.c")
+      host_exe = File.join(stage, "rubylock-rpc.exe")
       ok = system(
         env, gcc, "-O2", "-Wall", "-Wextra", "-s", "-static-libgcc", "-mwindows",
         *prefix_flags, host_src, host_res, "-o", host_exe
       )
-      raise "Failed to compile deadlock-rpc.exe" unless ok
+      raise "Failed to compile rubylock-rpc.exe" unless ok
 
-      # 2. Pack embedded DRPC payload archive
+      # 2. Pack embedded RLPC payload archive
       payload_entries = [
-        ["deadlock-rpc.exe", File.binread(host_exe)],
+        ["rubylock-rpc.exe", File.binread(host_exe)],
         ["LICENSE", File.binread(File.join(ROOT_DIR, "LICENSE"))],
         ["README.md", File.binread(File.join(ROOT_DIR, "README.md"))],
-        ["bin/deadlock-rpc", File.binread(File.join(ROOT_DIR, "bin", "deadlock-rpc"))],
+        ["bin/rubylock-rpc", File.binread(File.join(ROOT_DIR, "bin", "rubylock-rpc"))],
         ["assets/icon.ico", File.binread(File.join(ROOT_DIR, "assets", "icon.ico"))],
         ["assets/icon.png", File.binread(File.join(ROOT_DIR, "assets", "icon.png"))]
       ]
@@ -117,7 +112,7 @@ module Packager
 
       payload_bin = File.join(stage, "payload.bin")
       File.open(payload_bin, "wb") do |f|
-        f.write("DRPC")
+        f.write("RLPC")
         f.write([payload_entries.size].pack("V"))
         payload_entries.each do |rel_path, data|
           path_bytes = rel_path.encode("UTF-8")
@@ -138,7 +133,7 @@ module Packager
       raise "windres failed for installer resources" unless system(env, windres, setup_rc, "-O", "coff", "-o", setup_res)
 
       installer_src = File.join(ROOT_DIR, "packaging", "windows", "installer.c")
-      setup_exe_out = File.join(DIST_DIR, "DeadlockRPC-Ruby-Setup-#{short_version}-win64.exe")
+      setup_exe_out = File.join(DIST_DIR, "RubyLock-RPC-Setup-#{release_version}-win64.exe")
       FileUtils.rm_f(setup_exe_out)
       ok = system(
         env,
@@ -154,19 +149,19 @@ module Packager
   end
 
   def build_linux_tarball
-    tar_gz_out = File.join(DIST_DIR, "deadlock-rpc-linux-x86_64.tar.gz")
+    tar_gz_out = File.join(DIST_DIR, "rubylock-rpc-linux-x86_64.tar.gz")
     FileUtils.rm_f(tar_gz_out)
 
-    prefix = "deadlock-rpc-linux-x86_64"
+    prefix = "rubylock-rpc-linux-x86_64"
     files_to_pack = [
       ["LICENSE", 0o644],
       ["README.md", 0o644],
       ["Rakefile", 0o644],
-      ["deadlock-rpc.gemspec", 0o644],
-      ["bin/deadlock-rpc", 0o755],
+      ["rubylock-rpc.gemspec", 0o644],
+      ["bin/rubylock-rpc", 0o755],
       ["packaging/linux/install.sh", 0o755],
-      ["packaging/linux/deadlock-rpc.desktop", 0o644],
-      ["packaging/host/deadlock_rpc_host.c", 0o644],
+      ["packaging/linux/rubylock-rpc.desktop", 0o644],
+      ["packaging/host/rubylock_rpc_host.c", 0o644],
       ["assets/icon.png", 0o644],
       ["assets/icon.ico", 0o644]
     ]
@@ -177,14 +172,14 @@ module Packager
 
     linux_elf = nil
     if !Gem.win_platform? && (gcc = find_tool("gcc"))
-      linux_elf = File.join(DIST_DIR, "deadlock-rpc-elf")
-      host_src = File.join(ROOT_DIR, "packaging", "host", "deadlock_rpc_host.c")
+      linux_elf = File.join(DIST_DIR, "rubylock-rpc-elf")
+      host_src = File.join(ROOT_DIR, "packaging", "host", "rubylock_rpc_host.c")
       ok = system(
         gcc, "-O2", "-Wall", "-Wextra", "-s",
         "-ffile-prefix-map=#{ROOT_DIR}=.",
         host_src, "-o", linux_elf
       )
-      raise "Failed to compile Linux deadlock-rpc host binary" unless ok
+      raise "Failed to compile Linux rubylock-rpc host binary" unless ok
     end
 
     File.open(tar_gz_out, "wb") do |file|
@@ -193,7 +188,7 @@ module Packager
           files_to_pack.each do |rel_path, mode|
             src = File.join(ROOT_DIR, rel_path)
             content = File.binread(src)
-            content = content.gsub("\r\n", "\n") if rel_path.end_with?(".rb", ".sh", ".desktop", "deadlock-rpc")
+            content = content.gsub("\r\n", "\n") if rel_path.end_with?(".rb", ".sh", ".desktop", "rubylock-rpc")
             tar.add_file_simple("#{prefix}/#{rel_path}", mode, content.bytesize) do |io|
               io.write(content)
             end
@@ -206,7 +201,7 @@ module Packager
 
           if linux_elf && File.exist?(linux_elf)
             elf_bytes = File.binread(linux_elf)
-            tar.add_file_simple("#{prefix}/deadlock-rpc", 0o755, elf_bytes.bytesize) do |io|
+            tar.add_file_simple("#{prefix}/rubylock-rpc", 0o755, elf_bytes.bytesize) do |io|
               io.write(elf_bytes)
             end
           end

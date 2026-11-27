@@ -4,7 +4,7 @@
 require "set"
 require_relative "config"
 
-module DeadlockRpc
+module RubylockRpc
   module MatchMode
     UNKNOWN        = :unknown
     STANDARD       = :standard

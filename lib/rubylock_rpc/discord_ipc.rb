@@ -6,7 +6,7 @@ require "securerandom"
 require "socket"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   # Pure-Ruby Discord Rich Presence IPC client supporting both Windows Named Pipes
   # (\\.\pipe\discord-ipc-0..9) and Unix Domain Sockets.
   class DiscordIpcClient
@@ -159,6 +159,7 @@ module DeadlockRpc
           candidates = [
             File.join(d, "discord-ipc-#{idx}"),
             File.join(d, "app/com.discordapp.Discord/discord-ipc-#{idx}"),
+            File.join(d, "app/dev.vencord.Vesktop/discord-ipc-#{idx}"),
             File.join(d, "snap.discord/discord-ipc-#{idx}")
           ]
           candidates.each do |sock_path|

@@ -4,7 +4,7 @@
 require_relative "game_state"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   class LogWatcher
     HIDEOUT_MAPS = ["dl_hideout"].freeze
     RESYNC_BYTES = 10 * 1024 * 1024

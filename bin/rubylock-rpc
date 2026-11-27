@@ -2,6 +2,6 @@
 # frozen_string_literal: true
 # SPDX-License-Identifier: GPL-3.0-only
 
-require_relative "../lib/deadlock_rpc"
+require_relative "../lib/rubylock_rpc"
 
-exit(DeadlockRpc::Application.new(ARGV).run || 0)
+exit(RubylockRpc::Application.new(ARGV).run || 0)

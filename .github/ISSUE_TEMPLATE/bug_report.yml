@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a bug! Please check the [existing issues](https://github.com/buntatoes/deadlock-rpc-ruby/issues) first in case someone already reported it.
+        Thanks for reporting a bug! Please check the [existing issues](https://github.com/buntatoes/rubylock-rpc/issues) first in case someone already reported it.
 
   - type: textarea
     id: what-happened
@@ -21,7 +21,7 @@ body:
       label: Steps to reproduce
       description: How can we make the bug happen?
       placeholder: |
-        1. Start Deadlock RPC (Ruby Edition)
+        1. Start RubyLock RPC
         2. Launch Deadlock
         3. ...
 
@@ -59,9 +59,9 @@ body:
       label: Log file
       description: |
         The log file helps diagnose issues:
-        - Windows (`.exe` installer): `%LOCALAPPDATA%\DeadlockRPC-Ruby\logs\deadlock-rpc.log`
-        - Linux: `~/.config/deadlock-rpc/logs/deadlock-rpc.log`
-        - Portable / source checkout: `logs/deadlock-rpc.log`
+        - Windows (`.exe` installer): `%LOCALAPPDATA%\RubyLock-RPC\logs\rubylock-rpc.log`
+        - Linux: `~/.local/share/rubylock-rpc/logs/rubylock-rpc.log` (or `~/.config/rubylock-rpc/logs/rubylock-rpc.log`)
+        - Portable / source checkout: `logs/rubylock-rpc.log`
 
         The log is cleared on each launch, so copy it before restarting the app.
       value: |

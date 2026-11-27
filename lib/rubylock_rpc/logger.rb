@@ -4,7 +4,7 @@
 require "fileutils"
 require "time"
 
-module DeadlockRpc
+module RubylockRpc
   module RpcLogger
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3 }.freeze
 
@@ -22,12 +22,12 @@ module DeadlockRpc
           app_root
         elsif Gem.win_platform?
           base = ENV["LOCALAPPDATA"] || File.join(Dir.home, "AppData", "Local")
-          dir = File.join(base, "deadlock-rpc")
+          dir = File.join(base, "RubyLock-RPC")
           FileUtils.mkdir_p(dir)
           dir
         else
           base = ENV["XDG_CONFIG_HOME"] || File.join(Dir.home, ".config")
-          dir = File.join(base, "deadlock-rpc")
+          dir = File.join(base, "rubylock-rpc")
           FileUtils.mkdir_p(dir)
           dir
         end
@@ -38,7 +38,7 @@ module DeadlockRpc
       def directory_writable?(dir)
         return false unless File.directory?(dir)
 
-        probe = File.join(dir, ".deadlock_rpc_write_test_#{Process.pid}")
+        probe = File.join(dir, ".rubylock_rpc_write_test_#{Process.pid}")
         File.write(probe, "")
         File.delete(probe)
         true
@@ -49,10 +49,10 @@ module DeadlockRpc
       def init(base_dir = resolve_data_dir)
         logs_dir = File.join(base_dir, "logs")
         FileUtils.mkdir_p(logs_dir)
-        @log_path = File.join(logs_dir, "deadlock-rpc.log")
+        @log_path = File.join(logs_dir, "rubylock-rpc.log")
         @log_file = File.open(@log_path, "w:UTF-8")
         @log_file.sync = true
-        info("deadlock-rpc-ruby started - log: #{@log_path}")
+        info("rubylock-rpc started - log: #{@log_path}")
       rescue StandardError => e
         warn_stderr("Failed to initialize log file: #{e.message}")
       end

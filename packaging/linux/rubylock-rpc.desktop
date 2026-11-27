@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RubyLock RPC
+Comment=Discord Rich Presence for Deadlock
+Exec=rubylock-rpc
+Icon=rubylock-rpc
+Terminal=false
+Categories=Game;Utility;
+StartupNotify=false

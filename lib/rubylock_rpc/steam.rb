@@ -4,7 +4,7 @@
 require_relative "config"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   module Steam
     DEADLOCK_APP_ID    = "1422450"
     GAME_DIR_MARKER    = File.join("game", "citadel").freeze
@@ -127,7 +127,8 @@ module DeadlockRpc
         home = Dir.home rescue ""
         [
           File.join(home, ".steam/steam/steamapps/libraryfolders.vdf"),
-          File.join(home, ".local/share/Steam/steamapps/libraryfolders.vdf")
+          File.join(home, ".local/share/Steam/steamapps/libraryfolders.vdf"),
+          File.join(home, ".var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/libraryfolders.vdf")
         ]
       end
     end

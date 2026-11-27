@@ -2,20 +2,21 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 require "socket"
-require_relative "deadlock_rpc/logger"
-require_relative "deadlock_rpc/toml"
-require_relative "deadlock_rpc/config"
-require_relative "deadlock_rpc/game_state"
-require_relative "deadlock_rpc/log_watcher"
-require_relative "deadlock_rpc/hero_api"
-require_relative "deadlock_rpc/discord_ipc"
-require_relative "deadlock_rpc/steam"
-require_relative "deadlock_rpc/process_watcher"
-require_relative "deadlock_rpc/launcher"
+require_relative "rubylock_rpc/logger"
+require_relative "rubylock_rpc/toml"
+require_relative "rubylock_rpc/config"
+require_relative "rubylock_rpc/game_state"
+require_relative "rubylock_rpc/log_watcher"
+require_relative "rubylock_rpc/hero_api"
+require_relative "rubylock_rpc/discord_ipc"
+require_relative "rubylock_rpc/steam"
+require_relative "rubylock_rpc/process_watcher"
+require_relative "rubylock_rpc/launcher"
 
-module DeadlockRpc
-  VERSION = "1.0.2"
-  DISCORD_APP_ID = "1566683259763429509"
+module RubylockRpc
+  VERSION = "1.1.0"
+  # Public Discord Application ID (not a personal user ID); can be overridden via config.toml
+  DEFAULT_DISCORD_APP_ID = "1566683259763429509"
   SINGLE_INSTANCE_PORT = 47_782
   MIN_TIMER_REFRESH_SECS = 5
 
@@ -34,7 +35,7 @@ module DeadlockRpc
       flags, game_command = split_args(@argv)
 
       if flags.include?("--version") || flags.include?("-v")
-        puts "deadlock-rpc-ruby v#{VERSION}"
+        puts "rubylock-rpc v#{VERSION}"
         return 0
       end
 
@@ -59,7 +60,7 @@ module DeadlockRpc
 
       launch_mode = if flags.include?("--launch-with-command")
                       if game_command.empty?
-                        RpcLogger.warn("[deadlock-rpc] --launch-with-command needs a command after --, e.g. -- %command%. Exiting.")
+                        RpcLogger.warn("[rubylock-rpc] --launch-with-command needs a command after --, e.g. -- %command%. Exiting.")
                         return 1
                       end
                       [:command, game_command]
@@ -71,14 +72,14 @@ module DeadlockRpc
 
       if instance_lock.nil?
         if launch_mode[0] == :command
-          RpcLogger.info("[deadlock-rpc] Another instance is running. Launching the game and waiting for it to exit.")
+          RpcLogger.info("[rubylock-rpc] Another instance is running. Launching the game and waiting for it to exit.")
           pid = Launcher.launch_deadlock_with_command(launch_mode[1])
           Process.wait(pid) if pid
         elsif !no_launch
-          RpcLogger.info("[deadlock-rpc] Another instance is running - re-triggering launch.")
+          RpcLogger.info("[rubylock-rpc] Another instance is running - re-triggering launch.")
           Launcher.launch_deadlock
         else
-          RpcLogger.info("[deadlock-rpc] Another instance is already running. Exiting.")
+          RpcLogger.info("[rubylock-rpc] Another instance is already running. Exiting.")
         end
         return 0
       end
@@ -91,7 +92,7 @@ module DeadlockRpc
       end
 
       log_path = Steam.find_console_log(cfg.general.game_folder)
-      RpcLogger.info("[deadlock-rpc] Monitoring: #{log_path}")
+      RpcLogger.info("[rubylock-rpc] Monitoring: #{log_path}")
 
       state = GameState.new
       mutex = Mutex.new
@@ -116,8 +117,8 @@ module DeadlockRpc
 
     def print_help
       puts <<~HELP
-        Deadlock Rich Presence for Discord (Ruby Edition v#{VERSION}, GPL-3.0)
-        Usage: deadlock-rpc [OPTIONS] [-- <game command>]
+        RubyLock RPC — Deadlock Rich Presence for Discord (v#{VERSION}, GPL-3.0)
+        Usage: rubylock-rpc [OPTIONS] [-- <game command>]
 
         Options:
           --no-launch                    Skip launching Deadlock on startup
@@ -129,8 +130,8 @@ module DeadlockRpc
       HELP
     end
 
-    def connect_discord
-      client = DiscordIpcClient.new(DISCORD_APP_ID)
+    def connect_discord(app_id)
+      client = DiscordIpcClient.new(app_id)
       loop do
         client.connect
         RpcLogger.info("[discord] Connected!")
@@ -142,8 +143,9 @@ module DeadlockRpc
     end
 
     def run_rpc_loop(state, mutex, cfg, shared)
+      app_id = cfg.general.discord_app_id || DEFAULT_DISCORD_APP_ID
       RpcLogger.info("[discord] Connecting...")
-      client = connect_discord
+      client = connect_discord(app_id)
       current_portrait = cfg.presence.hero_portrait_style
       hero_cache = HeroCache.new(current_portrait)
       last_state = nil
@@ -177,7 +179,7 @@ module DeadlockRpc
         if phase != GamePhase::NOT_RUNNING
           game_was_running = true
         elsif game_was_running
-          RpcLogger.info("[deadlock-rpc] Game closed.")
+          RpcLogger.info("[rubylock-rpc] Game closed.")
           if shared.exit_when_game_closes
             client.clear_activity
             client.close

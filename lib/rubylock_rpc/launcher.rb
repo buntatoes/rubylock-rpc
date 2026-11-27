@@ -5,7 +5,7 @@ require_relative "process_watcher"
 require_relative "steam"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   module Launcher
     DEADLOCK_APP_ID = "1422450"
 

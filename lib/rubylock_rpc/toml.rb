@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 # SPDX-License-Identifier: GPL-3.0-only
 
-module DeadlockRpc
-  # Lightweight, zero-dependency TOML parser and serializer tailored for Deadlock RPC config files.
+module RubylockRpc
+  # Lightweight, zero-dependency TOML parser and serializer tailored for RubyLock RPC config files.
   # Supports standard [section] and [nested.section] tables, double-quoted and literal single-quoted
   # strings, booleans, integers, and # comments.
   module Toml

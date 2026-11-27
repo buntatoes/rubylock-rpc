@@ -7,7 +7,7 @@ require "uri"
 require_relative "config"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   HeroData = Struct.new(:name, :hideout_text, :icon_url, keyword_init: true)
 
   class HeroCache

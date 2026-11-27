@@ -4,7 +4,7 @@
 require_relative "toml"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   module HeroPortraitStyle
     NORMAL   = :normal
     GLOAT    = :gloat
@@ -33,6 +33,7 @@ module DeadlockRpc
     :auto_update,
     :game_log_poll_interval_ms,
     :discord_update_interval_s,
+    :discord_app_id,
     :game_folder,
     :declined_shortcut,
     :config_version,
@@ -45,9 +46,10 @@ module DeadlockRpc
         auto_update: false,
         game_log_poll_interval_ms: 500,
         discord_update_interval_s: 5,
+        discord_app_id: nil,
         game_folder: nil,
         declined_shortcut: false,
-        config_version: 4
+        config_version: 5
       }
       super(defaults.merge(kwargs))
     end
@@ -113,9 +115,9 @@ module DeadlockRpc
     def initialize(**kwargs)
       defaults = {
         fallback_large_image: "deadlock_logo",
-        fallback_large_image_tooltip: "Deadlock RPC",
+        fallback_large_image_tooltip: "RubyLock RPC",
         corner_image: "deadlock_logo",
-        corner_image_tooltip: "Deadlock RPC"
+        corner_image_tooltip: "RubyLock RPC"
       }
       super(defaults.merge(kwargs))
     end
@@ -177,7 +179,7 @@ module DeadlockRpc
   end
 
   module ConfigManager
-    CURRENT_CONFIG_VERSION = 4
+    CURRENT_CONFIG_VERSION = 5
 
     DEFAULT_TOML = <<~TOML
       [general]
@@ -187,6 +189,8 @@ module DeadlockRpc
       auto_update = false
       game_log_poll_interval_ms = 500
       discord_update_interval_s = 5
+      # Optional Discord Application ID override (leave empty to use the built-in public Deadlock app ID).
+      discord_app_id = ""
       # Override the Deadlock install location if auto-detection fails. Filled in automatically once
       # the game is found, and re-detected if the folder ever stops being a Deadlock install.
       # Example: steamapps\\common\\Deadlock
@@ -194,7 +198,7 @@ module DeadlockRpc
       # Set to true after the user declines the shortcut install prompt. Managed automatically.
       declined_shortcut = false
       # Managed automatically — do not edit.
-      config_version = 4
+      config_version = 5
 
       [presence]
       show_hero_image = true
@@ -225,9 +229,9 @@ module DeadlockRpc
       # Asset key names registered in your Discord application's Art Assets.
       [images]
       fallback_large_image = "deadlock_logo"
-      fallback_large_image_tooltip = "Deadlock RPC"
+      fallback_large_image_tooltip = "RubyLock RPC"
       corner_image = "deadlock_logo"
-      corner_image_tooltip = "Deadlock RPC"
+      corner_image_tooltip = "RubyLock RPC"
     TOML
 
     module_function
@@ -268,12 +272,14 @@ module DeadlockRpc
       img_h = h["images"] || {}
 
       gf = gen_h["game_folder"].to_s.strip
+      app_id = gen_h["discord_app_id"].to_s.strip
       general = GeneralConfig.new(
         launch_game_on_start: bool_or(gen_h["launch_game_on_start"], true),
         exit_when_game_closes: bool_or(gen_h["exit_when_game_closes"], true),
         auto_update: bool_or(gen_h["auto_update"], false),
         game_log_poll_interval_ms: int_or(gen_h["game_log_poll_interval_ms"], 500),
         discord_update_interval_s: int_or(gen_h["discord_update_interval_s"], 5),
+        discord_app_id: app_id.empty? ? nil : app_id,
         game_folder: gf.empty? ? nil : gf,
         declined_shortcut: bool_or(gen_h["declined_shortcut"], false),
         config_version: int_or(gen_h["config_version"], CURRENT_CONFIG_VERSION)
@@ -302,9 +308,9 @@ module DeadlockRpc
 
       images = ImagesConfig.new(
         fallback_large_image: str_or(img_h["fallback_large_image"], "deadlock_logo"),
-        fallback_large_image_tooltip: str_or(img_h["fallback_large_image_tooltip"], "Deadlock RPC"),
+        fallback_large_image_tooltip: str_or(img_h["fallback_large_image_tooltip"], "RubyLock RPC"),
         corner_image: str_or(img_h["corner_image"], "deadlock_logo"),
-        corner_image_tooltip: str_or(img_h["corner_image_tooltip"], "Deadlock RPC")
+        corner_image_tooltip: str_or(img_h["corner_image_tooltip"], "RubyLock RPC")
       )
 
       Config.new(general: general, presence: presence, images: images)

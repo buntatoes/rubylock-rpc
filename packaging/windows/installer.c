@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Self-contained Windows installer & uninstaller for Deadlock RPC (Ruby Edition).
- * - Extracts embedded DRPC payload to %LOCALAPPDATA%\DeadlockRPC-Ruby
- * - Creates a Desktop shortcut ("Deadlock RPC.lnk") and Start Menu shortcut
- *   pointing to deadlock-rpc.exe with assets\icon.ico so launching Deadlock
+/* Self-contained Windows installer & uninstaller for RubyLock RPC.
+ * - Extracts embedded RLPC payload to %LOCALAPPDATA%\RubyLock-RPC
+ * - Creates a Desktop shortcut ("RubyLock RPC.lnk") and Start Menu shortcut
+ *   pointing to rubylock-rpc.exe with assets\icon.ico so launching Deadlock
  *   through the shortcut automatically starts Deadlock with -condebug and RPC.
  * - Registers Add/Remove Programs uninstall support (--uninstall).
  */
@@ -16,10 +16,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define APP_DISPLAY_NAME  L"Deadlock RPC (Ruby Edition)"
-#define APP_VERSION       L"1.0.2"
+#define APP_DISPLAY_NAME  L"RubyLock RPC"
+#define APP_VERSION       L"1.1.0"
 #define APP_PUBLISHER     L"Buntato"
-#define UNINSTALL_REG_KEY L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DeadlockRpcRuby"
+#define UNINSTALL_REG_KEY L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RubyLockRpc"
 #define PAYLOAD_RES_ID    101
 
 static uint32_t read_le32(const uint8_t *p) {
@@ -85,9 +85,9 @@ static int create_shortcut(
 static void get_install_dir(wchar_t *out, size_t count) {
     wchar_t local_app[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, local_app))) {
-        _snwprintf(out, count, L"%ls\\DeadlockRPC-Ruby", local_app);
+        _snwprintf(out, count, L"%ls\\RubyLock-RPC", local_app);
     } else {
-        _snwprintf(out, count, L"C:\\DeadlockRPC-Ruby");
+        _snwprintf(out, count, L"C:\\RubyLock-RPC");
     }
     out[count - 1] = L'\0';
 }
@@ -95,7 +95,7 @@ static void get_install_dir(wchar_t *out, size_t count) {
 static void get_desktop_shortcut_path(wchar_t *out, size_t count) {
     wchar_t desktop[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0, desktop))) {
-        _snwprintf(out, count, L"%ls\\Deadlock RPC.lnk", desktop);
+        _snwprintf(out, count, L"%ls\\RubyLock RPC.lnk", desktop);
     } else {
         out[0] = L'\0';
     }
@@ -105,7 +105,7 @@ static void get_desktop_shortcut_path(wchar_t *out, size_t count) {
 static void get_startmenu_shortcut_path(wchar_t *out, size_t count) {
     wchar_t programs[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROGRAMS, NULL, 0, programs))) {
-        _snwprintf(out, count, L"%ls\\Deadlock RPC.lnk", programs);
+        _snwprintf(out, count, L"%ls\\RubyLock RPC.lnk", programs);
     } else {
         out[0] = L'\0';
     }
@@ -146,7 +146,7 @@ static int extract_payload(const wchar_t *install_dir) {
     if (!hData || res_size < 8) return 0;
 
     const uint8_t *buf = (const uint8_t *)LockResource(hData);
-    if (!buf || memcmp(buf, "DRPC", 4) != 0) return 0;
+    if (!buf || memcmp(buf, "RLPC", 4) != 0) return 0;
 
     uint32_t file_count = read_le32(buf + 4);
     size_t offset = 8;
@@ -236,7 +236,7 @@ static int do_uninstall(int silent) {
     if (!silent) {
         int res = MessageBoxW(
             NULL,
-            L"Uninstall Deadlock RPC (Ruby Edition) and remove its Desktop and Start Menu shortcuts?",
+            L"Uninstall RubyLock RPC and remove its Desktop and Start Menu shortcuts?",
             APP_DISPLAY_NAME,
             MB_ICONQUESTION | MB_YESNO
         );
@@ -247,11 +247,12 @@ static int do_uninstall(int silent) {
     if (startmenu_lnk[0]) DeleteFileW(startmenu_lnk);
     RegDeleteTreeW(HKEY_CURRENT_USER, UNINSTALL_REG_KEY);
     remove_directory_recursive(install_dir);
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 
     if (!silent) {
         MessageBoxW(
             NULL,
-            L"Deadlock RPC (Ruby Edition) has been uninstalled.",
+            L"RubyLock RPC has been uninstalled.",
             APP_DISPLAY_NAME,
             MB_ICONINFORMATION | MB_OK
         );
@@ -275,9 +276,9 @@ static int do_install(int silent) {
         _snwprintf(
             prompt,
             sizeof(prompt) / sizeof(prompt[0]),
-            L"Install Deadlock RPC (Ruby Edition) v" APP_VERSION L"?\n\n"
+            L"Install RubyLock RPC v" APP_VERSION L"?\n\n"
             L"Install folder:\n%ls\n\n"
-            L"This will also create a \"Deadlock RPC\" shortcut on your Desktop to launch Deadlock with Discord Rich Presence.",
+            L"This will also create a \"RubyLock RPC\" shortcut on your Desktop to launch Deadlock with Discord Rich Presence.",
             install_dir
         );
         int res = MessageBoxW(NULL, prompt, APP_DISPLAY_NAME, MB_ICONINFORMATION | MB_OKCANCEL);
@@ -291,9 +292,9 @@ static int do_install(int silent) {
         return 1;
     }
 
-    _snwprintf(exe_target, sizeof(exe_target) / sizeof(exe_target[0]), L"%ls\\deadlock-rpc.exe", install_dir);
+    _snwprintf(exe_target, sizeof(exe_target) / sizeof(exe_target[0]), L"%ls\\rubylock-rpc.exe", install_dir);
     _snwprintf(icon_path, sizeof(icon_path) / sizeof(icon_path[0]), L"%ls\\assets\\icon.ico", install_dir);
-    _snwprintf(setup_copy, sizeof(setup_copy) / sizeof(setup_copy[0]), L"%ls\\DeadlockRPC-Ruby-Setup.exe", install_dir);
+    _snwprintf(setup_copy, sizeof(setup_copy) / sizeof(setup_copy[0]), L"%ls\\RubyLock-RPC-Setup.exe", install_dir);
 
     if (GetModuleFileNameW(NULL, setup_self, MAX_PATH) > 0) {
         CopyFileW(setup_self, setup_copy, FALSE);
@@ -309,7 +310,7 @@ static int do_install(int silent) {
             exe_target,
             install_dir,
             icon_path,
-            L"Launch Deadlock with Discord Rich Presence (Ruby Edition)"
+            L"Launch Deadlock with Discord Rich Presence (RubyLock RPC)"
         );
     }
     if (startmenu_lnk[0]) {
@@ -318,7 +319,7 @@ static int do_install(int silent) {
             exe_target,
             install_dir,
             icon_path,
-            L"Launch Deadlock with Discord Rich Presence (Ruby Edition)"
+            L"Launch Deadlock with Discord Rich Presence (RubyLock RPC)"
         );
     }
     CoUninitialize();
@@ -329,7 +330,7 @@ static int do_install(int silent) {
     if (!silent) {
         MessageBoxW(
             NULL,
-            L"Installation complete!\n\nUse the \"Deadlock RPC\" shortcut on your Desktop to launch Deadlock with Discord Rich Presence.",
+            L"Installation complete!\n\nUse the \"RubyLock RPC\" shortcut on your Desktop to launch Deadlock with Discord Rich Presence.",
             APP_DISPLAY_NAME,
             MB_ICONINFORMATION | MB_OK
         );

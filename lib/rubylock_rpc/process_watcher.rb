@@ -4,7 +4,7 @@
 require_relative "game_state"
 require_relative "logger"
 
-module DeadlockRpc
+module RubylockRpc
   module ProcessWatcher
     POLL_INTERVAL_S = 3
 
@@ -37,12 +37,18 @@ module DeadlockRpc
 
     def process_running?(target_name)
       target = target_name.to_s.downcase
+      target_stem = target.sub(/\.exe\z/, "")
       if Gem.win_platform?
         win32_process_running?(target)
       else
-        Dir.glob("/proc/[0-9]*/comm").any? do |comm_path|
-          name = File.read(comm_path).strip.downcase
-          name == target || name == target.sub(/\.exe\z/, "")
+        Dir.glob("/proc/[0-9]*").any? do |proc_dir|
+          comm = File.read(File.join(proc_dir, "comm")).strip.downcase
+          return true if comm == target || comm == target_stem
+
+          cmdline = File.binread(File.join(proc_dir, "cmdline"))
+          first_arg = cmdline.split("\0", 2).first.to_s.downcase
+          base = File.basename(first_arg.tr("\\", "/"))
+          base == target || base == target_stem
         rescue StandardError
           false
         end

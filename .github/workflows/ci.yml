@@ -27,10 +27,10 @@ jobs:
           ruby-version: "3.4"
 
       - name: Check Ruby syntax
-        run: ruby -c bin/deadlock-rpc lib/deadlock_rpc.rb lib/deadlock_rpc/*.rb scripts/package.rb test/test_deadlock_rpc.rb
+        run: ruby -c bin/rubylock-rpc lib/rubylock_rpc.rb lib/rubylock_rpc/*.rb rubylock-rpc.gemspec scripts/package.rb test/test_rubylock_rpc.rb
 
       - name: Run Minitest suite
-        run: ruby -Ilib:test test/test_deadlock_rpc.rb
+        run: ruby -Ilib:test test/test_rubylock_rpc.rb
 
       - name: Build Windows EXE installer and Linux packages
         run: ruby scripts/package.rb

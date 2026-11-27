@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Native host executable for Deadlock RPC (Ruby Edition).
- * Windows: GUI subsystem wrapper (deadlock-rpc.exe) that launches Ruby cleanly
+/* Native host executable for RubyLock RPC.
+ * Windows: GUI subsystem wrapper (rubylock-rpc.exe) that launches Ruby cleanly
  *          without flashing a console window when opened via the Desktop shortcut.
- * Linux:   Native ELF wrapper (deadlock-rpc).
+ * Linux:   Native ELF wrapper (rubylock-rpc).
  */
 
 #include <stdio.h>
@@ -86,14 +86,14 @@ int main(int argc, char **argv) {
     if (!found) {
         MessageBoxA(
             NULL,
-            "Ruby 3.2+ was not found on PATH or C:\\Ruby*-x64.\nPlease install Ruby (https://rubyinstaller.org/) to run Deadlock RPC (Ruby Edition).",
-            "Deadlock RPC (Ruby Edition)",
+            "Ruby 3.2+ was not found on PATH or C:\\Ruby*-x64.\nPlease install Ruby (https://rubyinstaller.org/) to run RubyLock RPC.",
+            "RubyLock RPC",
             MB_ICONERROR | MB_OK
         );
         return 1;
     }
 
-    snprintf(script_path, sizeof(script_path), "%s\\bin\\deadlock-rpc", app_dir);
+    snprintf(script_path, sizeof(script_path), "%s\\bin\\rubylock-rpc", app_dir);
     snprintf(cmdline, sizeof(cmdline), "\"%s\" \"%s\"", ruby_exe, script_path);
 
     for (int i = 1; i < argc; ++i) {
@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
     if (!CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, flags, NULL, app_dir, &si, &pi)) {
         MessageBoxA(
             NULL,
-            "Failed to start Deadlock RPC Ruby runtime.",
-            "Deadlock RPC (Ruby Edition)",
+            "Failed to start RubyLock RPC runtime.",
+            "RubyLock RPC",
             MB_ICONERROR | MB_OK
         );
         return 1;
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     }
     exe_path[len] = '\0';
     char *dir = dirname(exe_path);
-    snprintf(script_path, sizeof(script_path), "%s/bin/deadlock-rpc", dir);
+    snprintf(script_path, sizeof(script_path), "%s/bin/rubylock-rpc", dir);
 
     char **new_argv = calloc((size_t)argc + 3, sizeof(char *));
     if (!new_argv) return 1;

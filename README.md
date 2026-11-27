@@ -8,7 +8,7 @@
   Forked from and based on the original Rust project by **[HeyTariq/deadlock-rpc](https://github.com/HeyTariq/deadlock-rpc)**.
 
   <p>
-    <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases/latest"><img src="https://img.shields.io/badge/release-v1.0.1-blue" alt="Latest Release" /></a>
+    <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases/latest"><img src="https://img.shields.io/badge/release-v1.0.2-blue" alt="Latest Release" /></a>
     <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases"><img src="https://img.shields.io/github/downloads/buntatoes/deadlock-rpc-ruby/total?color=brightgreen&label=downloads" alt="Downloads" /></a>
     <a href="https://github.com/buntatoes/deadlock-rpc-ruby/actions/workflows/ci.yml"><img src="https://github.com/buntatoes/deadlock-rpc-ruby/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
     <a href="#installation--packaging"><img src="https://img.shields.io/badge/language-Ruby%203.2%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.2+" /></a>
@@ -27,7 +27,7 @@
 ## Features
 
 - **100% Pure Ruby Core (Zero External Gems)**: Runs on standard Ruby (`3.2+` / `3.4+`) using only the Ruby standard library (`json`, `net/http`, `socket`, `win32/registry`, `open3`, `zlib`).
-- **Windows `.exe` Installer with Desktop Shortcut**: `DeadlockRPC-Ruby-Setup-v1.0.1-win64.exe` installs `deadlock-rpc.exe` and the Ruby runtime files to `%LOCALAPPDATA%\DeadlockRPC-Ruby`, registers Windows Add/Remove Programs uninstall support, and automatically creates a **"Deadlock RPC"** shortcut on your Desktop and Start Menu so double-clicking it launches Deadlock with `-condebug` and Discord Rich Presence.
+- **Windows `.exe` Installer with Desktop Shortcut**: `DeadlockRPC-Ruby-Setup-v1.0.2-win64.exe` installs `deadlock-rpc.exe` and the Ruby runtime files to `%LOCALAPPDATA%\DeadlockRPC-Ruby`, registers Windows Add/Remove Programs uninstall support, and automatically creates a **"Deadlock RPC"** shortcut on your Desktop and Start Menu so double-clicking it launches Deadlock with `-condebug` and Discord Rich Presence.
 - **Linux Package**: `deadlock-rpc-linux-x86_64.tar.gz` includes an XDG desktop entry and `install.sh` installer for `~/.local`.
 - **Live Discord Rich Presence**: Automatically displays your current hero, match mode (`Standard Match`, `Ranked Match`, `Street Brawl`, `Bot Match`, `Training Range`, `Hero Labs`), match elapsed timer, party headcount in the Hideout, and game phase.
 - **Five Hero Portrait Styles**: Supports `"normal"`, `"gloat"`, `"critical"`, `"icon"`, and `"fullbody"` portraits via the community [Deadlock API](https://deadlock-api.com), with a 45-hero offline fallback table.
@@ -41,8 +41,8 @@ Requires [Ruby 3.2+](https://www.ruby-lang.org/) (tested on Ruby 3.4).
 
 ### Windows (`.exe` Installer)
 
-1. Download `DeadlockRPC-Ruby-Setup-v1.0.1-win64.exe` from the [Releases](../../releases) page (or build it from source with `ruby scripts/package.rb --exe`).
-2. Run `DeadlockRPC-Ruby-Setup-v1.0.1-win64.exe` to install to `%LOCALAPPDATA%\DeadlockRPC-Ruby` and create the **"Deadlock RPC"** Desktop shortcut.
+1. Download `DeadlockRPC-Ruby-Setup-v1.0.2-win64.exe` from the [Releases](../../releases) page (or build it from source with `ruby scripts/package.rb --exe`).
+2. Run `DeadlockRPC-Ruby-Setup-v1.0.2-win64.exe` to install to `%LOCALAPPDATA%\DeadlockRPC-Ruby` and create the **"Deadlock RPC"** Desktop shortcut.
 3. Double-click the **"Deadlock RPC"** shortcut on your Desktop to launch Deadlock with Discord Rich Presence automatically.
 4. To uninstall later, use Windows **Installed Apps / Add or Remove Programs** (or run the setup executable with `--uninstall`).
 
@@ -64,7 +64,7 @@ deadlock-rpc
 git clone https://github.com/buntatoes/deadlock-rpc-ruby.git
 cd deadlock-rpc-ruby
 
-# Build both dist/DeadlockRPC-Ruby-Setup-v1.0.1-win64.exe and dist/deadlock-rpc-linux-x86_64.tar.gz:
+# Build both dist/DeadlockRPC-Ruby-Setup-v1.0.2-win64.exe and dist/deadlock-rpc-linux-x86_64.tar.gz:
 ruby scripts/package.rb
 ```
 

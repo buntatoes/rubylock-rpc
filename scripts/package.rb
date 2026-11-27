@@ -21,7 +21,7 @@ module Packager
 
   def build_all(target = :all)
     FileUtils.mkdir_p(DIST_DIR)
-    build_windows_installer if [:all, :windows, :exe].include?(target)
+    build_windows_installer(required: target != :all) if [:all, :windows, :exe].include?(target)
     build_linux_tarball if [:all, :linux].include?(target)
   end
 
@@ -52,28 +52,41 @@ module Packager
     end
   end
 
-  def build_windows_installer
-    unless Gem.win_platform?
-      puts "[package] Skipping Windows .exe installer build on non-Windows host"
-      return
+  def build_windows_installer(required: true)
+    if Gem.win_platform?
+      gcc = find_tool("gcc.exe", [
+        "C:/Ruby*-x64/msys64/ucrt64/bin/gcc.exe",
+        "C:/msys64/ucrt64/bin/gcc.exe"
+      ])
+      raise "gcc.exe not found for compiling Windows executables" unless gcc
+
+      windres = find_tool("windres.exe", [
+        "C:/Ruby*-x64/msys64/ucrt64/bin/windres.exe",
+        "C:/msys64/ucrt64/bin/windres.exe"
+      ])
+      raise "windres.exe not found for embedding Windows icon and payload resources" unless windres
+
+      gcc_bin_dir = File.dirname(gcc)
+      env = { "PATH" => "#{gcc_bin_dir};#{ENV['PATH']}" }
+    else
+      gcc = find_tool("x86_64-w64-mingw32-gcc")
+      windres = find_tool("x86_64-w64-mingw32-windres")
+      unless gcc && windres
+        if required
+          raise "x86_64-w64-mingw32-gcc and x86_64-w64-mingw32-windres are required to cross-compile Windows executables"
+        end
+        puts "[package] Skipping Windows .exe installer build on non-Windows host (MinGW-w64 toolchain not found)"
+        return
+      end
+      env = {}
     end
 
-    gcc = find_tool("gcc.exe", [
-      "C:/Ruby*-x64/msys64/ucrt64/bin/gcc.exe",
-      "C:/msys64/ucrt64/bin/gcc.exe"
-    ])
-    raise "gcc.exe not found for compiling Windows executables" unless gcc
-
-    windres = find_tool("windres.exe", [
-      "C:/Ruby*-x64/msys64/ucrt64/bin/windres.exe",
-      "C:/msys64/ucrt64/bin/windres.exe"
-    ])
-    raise "windres.exe not found for embedding Windows icon and payload resources" unless windres
-
-    gcc_bin_dir = File.dirname(gcc)
-    env = { "PATH" => "#{gcc_bin_dir};#{ENV['PATH']}" }
-
     Dir.mktmpdir("deadlock-rpc-win64") do |stage|
+      prefix_flags = [
+        "-ffile-prefix-map=#{ROOT_DIR}=.",
+        "-ffile-prefix-map=#{stage}=."
+      ]
+
       icon_src = File.join(ROOT_DIR, "assets", "icon.ico")
       host_rc  = File.join(stage, "host.rc")
       host_res = File.join(stage, "host.res.o")
@@ -83,7 +96,10 @@ module Packager
       # 1. Build deadlock-rpc.exe (native GUI host executable)
       host_src = File.join(ROOT_DIR, "packaging", "host", "deadlock_rpc_host.c")
       host_exe = File.join(stage, "deadlock-rpc.exe")
-      ok = system(env, gcc, "-O2", "-Wall", "-Wextra", "-mwindows", host_src, host_res, "-o", host_exe)
+      ok = system(
+        env, gcc, "-O2", "-Wall", "-Wextra", "-s", "-static-libgcc", "-mwindows",
+        *prefix_flags, host_src, host_res, "-o", host_exe
+      )
       raise "Failed to compile deadlock-rpc.exe" unless ok
 
       # 2. Pack embedded DRPC payload archive
@@ -126,8 +142,8 @@ module Packager
       FileUtils.rm_f(setup_exe_out)
       ok = system(
         env,
-        gcc, "-O2", "-Wall", "-Wextra", "-mwindows",
-        installer_src, setup_res,
+        gcc, "-O2", "-Wall", "-Wextra", "-s", "-static-libgcc", "-mwindows",
+        *prefix_flags, installer_src, setup_res,
         "-lole32", "-lshell32", "-luuid", "-ladvapi32",
         "-o", setup_exe_out
       )
@@ -163,7 +179,12 @@ module Packager
     if !Gem.win_platform? && (gcc = find_tool("gcc"))
       linux_elf = File.join(DIST_DIR, "deadlock-rpc-elf")
       host_src = File.join(ROOT_DIR, "packaging", "host", "deadlock_rpc_host.c")
-      system(gcc, "-O2", "-Wall", "-Wextra", host_src, "-o", linux_elf)
+      ok = system(
+        gcc, "-O2", "-Wall", "-Wextra", "-s",
+        "-ffile-prefix-map=#{ROOT_DIR}=.",
+        host_src, "-o", linux_elf
+      )
+      raise "Failed to compile Linux deadlock-rpc host binary" unless ok
     end
 
     File.open(tar_gz_out, "wb") do |file|

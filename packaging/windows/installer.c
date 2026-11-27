@@ -17,7 +17,7 @@
 #include <string.h>
 
 #define APP_DISPLAY_NAME  L"Deadlock RPC (Ruby Edition)"
-#define APP_VERSION       L"1.0.1"
+#define APP_VERSION       L"1.0.2"
 #define APP_PUBLISHER     L"Buntato"
 #define UNINSTALL_REG_KEY L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DeadlockRpcRuby"
 #define PAYLOAD_RES_ID    101
@@ -275,7 +275,7 @@ static int do_install(int silent) {
         _snwprintf(
             prompt,
             sizeof(prompt) / sizeof(prompt[0]),
-            L"Install Deadlock RPC (Ruby Edition) v1.0.1?\n\n"
+            L"Install Deadlock RPC (Ruby Edition) v" APP_VERSION L"?\n\n"
             L"Install folder:\n%ls\n\n"
             L"This will also create a \"Deadlock RPC\" shortcut on your Desktop to launch Deadlock with Discord Rich Presence.",
             install_dir
@@ -324,6 +324,7 @@ static int do_install(int silent) {
     CoUninitialize();
 
     register_uninstall(install_dir, setup_copy, icon_path);
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 
     if (!silent) {
         MessageBoxW(

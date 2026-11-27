@@ -30,5 +30,12 @@ cp "$SCRIPT_DIR/assets/icon.png" "$ICON_DIR/deadlock-rpc.png"
 sed "s|^Exec=.*|Exec=$BIN_DIR/deadlock-rpc|" \
     "$SCRIPT_DIR/packaging/linux/deadlock-rpc.desktop" > "$DESKTOP_DIR/deadlock-rpc.desktop"
 
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f -t "$PREFIX/share/icons/hicolor" >/dev/null 2>&1 || true
+fi
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true
+fi
+
 echo "Installed Deadlock RPC (Ruby Edition) to $APP_DIR"
 echo "Run with: $BIN_DIR/deadlock-rpc"

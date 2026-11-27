@@ -43,6 +43,9 @@ Requires [Ruby 3.2+](https://www.ruby-lang.org/) (tested on Ruby 3.4).
 3. Double-click the **"RubyLock RPC"** shortcut on your Desktop to launch Deadlock with Discord Rich Presence automatically.
 4. To uninstall later, use Windows **Installed Apps / Add or Remove Programs** (or run the setup executable with `--uninstall`).
 
+> [!NOTE]
+> Windows may show a **"Windows protected your PC"** warning. This happens because the app is not signed, not because it is harmful. Click **More info**, then **Run anyway**. If you'd rather verify the code yourself, [build from source](#building-packages-from-source).
+
 ### Linux (`.tar.gz` / XDG Desktop Installer)
 
 1. Download `rubylock-rpc-linux-x86_64.tar.gz` from the [Releases](../../releases) page (or build it from source with `ruby scripts/package.rb --linux`).

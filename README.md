@@ -9,6 +9,7 @@
 
   <p>
     <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases/latest"><img src="https://img.shields.io/badge/release-v1.0.1-blue" alt="Latest Release" /></a>
+    <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases"><img src="https://img.shields.io/github/downloads/buntatoes/deadlock-rpc-ruby/total?color=brightgreen&label=downloads" alt="Downloads" /></a>
     <a href="https://github.com/buntatoes/deadlock-rpc-ruby/actions/workflows/ci.yml"><img src="https://github.com/buntatoes/deadlock-rpc-ruby/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
     <a href="#installation--packaging"><img src="https://img.shields.io/badge/language-Ruby%203.2%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.2+" /></a>
     <a href="#installation--packaging"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue" alt="Platform: Windows | Linux" /></a>

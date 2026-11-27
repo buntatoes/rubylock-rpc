@@ -8,11 +8,11 @@
   Forked from and based on the original Rust project by **[HeyTariq/deadlock-rpc](https://github.com/HeyTariq/deadlock-rpc)**.
 
   <p>
-    <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases/latest"><img src="https://img.shields.io/github/v/release/buntatoes/deadlock-rpc-ruby?label=release" alt="Latest Release" /></a>
+    <a href="https://github.com/buntatoes/deadlock-rpc-ruby/releases/latest"><img src="https://img.shields.io/badge/release-v1.0.1-blue" alt="Latest Release" /></a>
     <a href="https://github.com/buntatoes/deadlock-rpc-ruby/actions/workflows/ci.yml"><img src="https://github.com/buntatoes/deadlock-rpc-ruby/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
     <a href="#installation--packaging"><img src="https://img.shields.io/badge/language-Ruby%203.2%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.2+" /></a>
     <a href="#installation--packaging"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue" alt="Platform: Windows | Linux" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/buntatoes/deadlock-rpc-ruby" alt="License: GPL-3.0" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0" /></a>
   </p>
 
 </div>
